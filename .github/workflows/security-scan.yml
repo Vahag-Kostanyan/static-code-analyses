@@ -1,11 +1,11 @@
 name: Static Code Security Scan
 
-on: 
+on:
   push:
     branches:
-      master:
-      dev:
-    pull_request:
+      - main
+      - develop
+  pull_request:
 
 jobs:
   security-scan:
