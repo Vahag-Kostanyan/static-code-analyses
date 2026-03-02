@@ -21,7 +21,7 @@
     "glob": "^13.0.6"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
+    "husky": "^8.0.0",
     "nodemon": "^3.1.14"
   }
 }
