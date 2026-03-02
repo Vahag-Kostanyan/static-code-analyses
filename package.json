@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "husky install"
   },
   "bin": {
     "analyese": "./code-analyses/index.js"
@@ -21,6 +21,7 @@
     "glob": "^13.0.6"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "nodemon": "^3.1.14"
   }
 }
