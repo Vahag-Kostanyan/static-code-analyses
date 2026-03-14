@@ -1,5 +1,65 @@
 {
-  "codeIssues": [],
+  "codeIssues": [
+    {
+      "file": "src/teest.js",
+      "findings": [
+        {
+          "line": 3,
+          "column": null,
+          "rule": "no-eval",
+          "severity": "HIGH",
+          "message": "Avoid using eval() — it can lead to code injection."
+        },
+        {
+          "line": 4,
+          "column": null,
+          "rule": "no-eval",
+          "severity": "HIGH",
+          "message": "Avoid using eval() — it can lead to code injection."
+        },
+        {
+          "line": 1,
+          "column": 6,
+          "rule": "no-hardcoded-secret",
+          "severity": "CRITICAL",
+          "message": "Possible hardcoded secret detected in variable \"password\"."
+        },
+        {
+          "line": 6,
+          "column": null,
+          "rule": "no-unsafe-query",
+          "severity": "HIGH",
+          "message": "Possible SQL injection via string concatenation in query."
+        }
+      ]
+    },
+    {
+      "file": "src/aaaa.js",
+      "findings": [
+        {
+          "line": 3,
+          "column": null,
+          "rule": "no-eval",
+          "severity": "HIGH",
+          "message": "Avoid using eval() — it can lead to code injection."
+        },
+        {
+          "line": 1,
+          "column": 6,
+          "rule": "no-hardcoded-secret",
+          "severity": "CRITICAL",
+          "message": "Possible hardcoded secret detected in variable \"password\"."
+        },
+        {
+          "line": 5,
+          "column": null,
+          "rule": "no-unsafe-query",
+          "severity": "HIGH",
+          "message": "Possible SQL injection via string concatenation in query."
+        }
+      ]
+    }
+  ],
   "dependencyIssues": [
     {
       "package": "lodash",
