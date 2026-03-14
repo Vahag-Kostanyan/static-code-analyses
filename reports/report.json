@@ -1,12 +1,93 @@
 {
   "codeIssues": [],
-  "dependencyIssues": [],
+  "dependencyIssues": [
+    {
+      "package": "lodash",
+      "severity": "high",
+      "via": [
+        {
+          "source": 1106913,
+          "name": "lodash",
+          "dependency": "lodash",
+          "title": "Command Injection in lodash",
+          "url": "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
+          "severity": "high",
+          "cwe": [
+            "CWE-77",
+            "CWE-94"
+          ],
+          "cvss": {
+            "score": 7.2,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H"
+          },
+          "range": "<4.17.21"
+        },
+        {
+          "source": 1108258,
+          "name": "lodash",
+          "dependency": "lodash",
+          "title": "Regular Expression Denial of Service (ReDoS) in lodash",
+          "url": "https://github.com/advisories/GHSA-29mw-wpgm-hmr9",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-400",
+            "CWE-1333"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          "range": ">=4.0.0 <4.17.21"
+        },
+        {
+          "source": 1112455,
+          "name": "lodash",
+          "dependency": "lodash",
+          "title": "Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions",
+          "url": "https://github.com/advisories/GHSA-xxjr-mmjv-4gpg",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-1321"
+          ],
+          "cvss": {
+            "score": 6.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L"
+          },
+          "range": ">=4.0.0 <=4.17.22"
+        }
+      ]
+    },
+    {
+      "package": "node-fetch",
+      "severity": "high",
+      "via": [
+        {
+          "source": 1095073,
+          "name": "node-fetch",
+          "dependency": "node-fetch",
+          "title": "node-fetch forwards secure headers to untrusted sites",
+          "url": "https://github.com/advisories/GHSA-r683-j2x4-v87g",
+          "severity": "high",
+          "cwe": [
+            "CWE-173",
+            "CWE-200",
+            "CWE-601"
+          ],
+          "cvss": {
+            "score": 8.8,
+            "vectorString": "CVSS:3.0/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+          },
+          "range": "<2.6.7"
+        }
+      ]
+    }
+  ],
   "summary": {
     "info": 0,
     "low": 0,
     "moderate": 0,
-    "high": 0,
+    "high": 2,
     "critical": 0,
-    "total": 0
+    "total": 2
   }
 }
