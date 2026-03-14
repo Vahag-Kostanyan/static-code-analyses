@@ -24,7 +24,7 @@ jobs:
         run: npm install
 
       - name: 🔍 Run Static Code Analyzer
-        run: node src/index.js
+        run: node code-analyses/index.js
 
       - name: 📄 Upload security report
         if: always()
