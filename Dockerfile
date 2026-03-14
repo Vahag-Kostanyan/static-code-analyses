@@ -1,4 +1,15 @@
-FROM node
+FROM node:18-alpine
+
 WORKDIR /app
-COPY /src/index.js /app/src/index.js
-ENTRYPOINT ["node", "/src/index.js"]
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm install --production
+
+# Copy source
+COPY . .
+
+EXPOSE 3000
+
+# Start the API + UI server
+CMD ["npm", "start"]

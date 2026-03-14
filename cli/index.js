@@ -1,18 +1,28 @@
 const glob = require("glob");
 const path = require("path");
 
-const { scanFile } = require("./scanner");
-const { generateReport } = require("./reporter");
-const { scanDependencies } = require("./dependency-scanner");
+const { scanFile } = require("../core/scanner");
+const { generateReport } = require("../reporters/json-reporter");
+const { scanDependencies } = require("../core/dependency-scanner");
 
 const rules = [
-  require("./rules/no-eval"),
-  require("./rules/no-hardcoded-secret"),
-  require("./rules/no-unsafe-query")
+  require("../rules/no-eval"),
+  require("../rules/no-hardcoded-secret"),
+  require("../rules/no-unsafe-query")
 ];
 
 const files = glob.sync("**/*.js", {
-  ignore: ["node_modules/**", "reports/**", ".github/**", ".husky/**"]
+  ignore: [
+    "node_modules/**",
+    "reports/**",
+    "web/**",
+    "server/**",
+    "core/**",
+    "reporters/**",
+    "cli/**",
+    ".github/**",
+    ".husky/**"
+  ]
 });
 
 let codeFindings = [];

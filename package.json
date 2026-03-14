@@ -2,14 +2,14 @@
   "name": "static-code-analyses",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "cli/index.js",
   "scripts": {
     "prepare": "husky install",
-    "analyze": "node ./code-analyses/index.js",
-    "start": "node ./code-analyses/server.js"
+    "analyze": "node ./cli/index.js",
+    "start": "node ./server/server.js"
   },
   "bin": {
-    "analyese": "./code-analyses/index.js"
+    "static-code-analyses": "./cli/index.js"
   },
   "keywords": [],
   "author": "",

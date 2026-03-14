@@ -1,4 +1,4 @@
-const REPORT_PATH = "http://localhost:3433/api/report";
+const REPORT_PATH = "http://localhost:3000/api/report";
 
 function createBadge(text, type) {
   const badge = document.createElement("span");
