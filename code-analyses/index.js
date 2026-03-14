@@ -1,6 +1,9 @@
 const glob = require("glob");
+const path = require("path");
+
 const { scanFile } = require("./scanner");
 const { generateReport } = require("./reporter");
+const { scanDependencies } = require("./dependency-scanner");
 
 const rules = [
   require("./rules/no-eval"),
@@ -9,23 +12,37 @@ const rules = [
 ];
 
 const files = glob.sync("**/*.js", {
-  ignore: ["node_modules/**"]
+  ignore: ["node_modules/**", "reports/**", ".github/**", ".husky/**"]
 });
 
-let allFindings = [];
+let codeFindings = [];
 
-files.forEach(file => {
-  const findings = scanFile(file, rules);
-  if (findings.length) {
-    allFindings.push({ file, findings });
+for (const file of files) {
+  const findings = scanFile(path.resolve(file), rules);
+
+  if (findings.length > 0) {
+    codeFindings.push({
+      file,
+      findings
+    });
   }
-});
-
-generateReport(allFindings);
-
-if (allFindings.length > 0) {
-  console.log("❌ Security issues found!");
-  process.exit(1);
-} else {
-  console.log("✅ Code is secure!");
 }
+
+console.log("🔍 Checking dependencies...");
+const dependencyReport = scanDependencies();
+
+const finalReport = {
+  codeIssues: codeFindings,
+  dependencyIssues: dependencyReport.issues,
+  summary: dependencyReport.vulnerabilities
+};
+
+generateReport(finalReport);
+
+if (codeFindings.length > 0 || dependencyReport.issues.length > 0) {
+  console.log("❌ Security issues detected");
+  process.exit(1);
+}
+
+console.log("✅ No vulnerabilities detected");
+process.exit(0);
