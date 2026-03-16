@@ -1,5 +1,9 @@
-// const password = "123456";
+const password = "123456";
 
-// eval("console.log('danger')");
+function dangerousEval(input) {
+  eval(input);
+}
 
-// db.query("SELECT * FROM users WHERE id=" + userInput);
+dangerousEval("console.log('danger')");
+
+module.exports = { password };

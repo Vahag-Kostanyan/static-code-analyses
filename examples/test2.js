@@ -1,6 +1,8 @@
-// const password = "123456";
+function findUserById(db, userInput) {
+  db.query("SELECT * FROM users WHERE id=" + userInput);
+  db.query(`SELECT * FROM users WHERE id = ${userInput}`);
+}
 
-// eval("console.log('danger')");
-// eval("console.log('danger')");
+setTimeout("console.log('scheduled string execution')", 1000);
 
-// db.query("SELECT * FROM users WHERE id=" + userInput);
+module.exports = { findUserById };

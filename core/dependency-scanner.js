@@ -1,5 +1,30 @@
 const { execSync } = require("child_process");
 
+function normalizeVia(via) {
+  if (!Array.isArray(via)) {
+    return [];
+  }
+
+  return via.filter(entry => entry && typeof entry === "object");
+}
+
+function buildDependencyIssues(vulnerabilities = {}) {
+  return Object.keys(vulnerabilities).map(packageName => {
+    const vuln = vulnerabilities[packageName] || {};
+    const via = normalizeVia(vuln.via);
+    const primary = via[0] || {};
+
+    return {
+      package: packageName,
+      version: vuln.range || "unknown",
+      severity: vuln.severity || "unknown",
+      advisory: primary.title || vuln.title || "Vulnerability",
+      title: primary.title || vuln.title || "Vulnerability",
+      via
+    };
+  });
+}
+
 function scanDependencies() {
   try {
     const result = execSync("npm audit --json", {
@@ -11,30 +36,15 @@ function scanDependencies() {
 
     return {
       vulnerabilities: audit.metadata?.vulnerabilities || {},
-      issues: []
+      issues: buildDependencyIssues(audit.vulnerabilities || {})
     };
   } catch (error) {
     try {
-      const output = JSON.parse(error.stdout);
-
-      const issues = [];
-
-      if (output.vulnerabilities) {
-        Object.keys(output.vulnerabilities).forEach(pkg => {
-          const vuln = output.vulnerabilities[pkg];
-
-          issues.push({
-            package: pkg,
-            severity: vuln.severity,
-            title: vuln.title,
-            via: vuln.via
-          });
-        });
-      }
+      const output = JSON.parse(error.stdout || "{}");
 
       return {
         vulnerabilities: output.metadata?.vulnerabilities || {},
-        issues
+        issues: buildDependencyIssues(output.vulnerabilities || {})
       };
     } catch {
       return {

@@ -1,95 +1,131 @@
 const glob = require("glob");
 const path = require("path");
 
-const { scanFile } = require("../core/scanner");
-const { generateReport } = require("../reporters/json-reporter");
+const { loadConfig } = require("../core/config-loader");
+const { loadRules } = require("../core/plugin-loader");
+const { scanFiles } = require("../core/scanner");
 const { scanDependencies } = require("../core/dependency-scanner");
+const { generateReport } = require("../reporters/json-reporter");
+const { printReport } = require("../reporters/console-reporter");
 
-const rules = [
-  require("../rules/no-eval"),
-  require("../rules/no-hardcoded-secret"),
-  require("../rules/no-unsafe-query")
-];
-
-const files = glob.sync("**/*.js", {
-  ignore: [
-    "node_modules/**",
-    "reports/**",
-    "web/**",
-    "server/**",
-    "core/**",
-    "reporters/**",
-    "cli/**",
-    ".github/**",
-    ".husky/**"
-  ]
-});
-
-let codeFindings = [];
-
-for (const file of files) {
-  const findings = scanFile(path.resolve(file), rules);
-
-  if (findings.length > 0) {
-    codeFindings.push({
-      file,
-      findings
-    });
+function toGlobIgnore(pattern) {
+  if (typeof pattern !== "string") {
+    return null;
   }
+
+  const normalized = pattern.replace(/\\/g, "/").replace(/\/+$/, "").trim();
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.includes("*") ? normalized : `${normalized}/**`;
 }
 
-console.log("🔍 Checking dependencies...");
-const dependencyReport = scanDependencies();
+function normalizeSeverityBucket(input) {
+  const normalized = String(input || "low").toLowerCase();
 
-const finalReport = {
-  codeIssues: codeFindings,
-  dependencyIssues: dependencyReport.issues,
-  summary: dependencyReport.vulnerabilities
-};
+  if (normalized === "moderate") {
+    return "medium";
+  }
 
-generateReport(finalReport);
+  if (["critical", "high", "medium", "low"].includes(normalized)) {
+    return normalized;
+  }
 
-/* -----------------------------
-   PRINT CODE ISSUES IN CONSOLE
---------------------------------*/
-if (codeFindings.length > 0) {
-  console.log("\n🚨 Code Vulnerabilities Found:\n");
+  return "low";
+}
 
-  codeFindings.forEach(fileIssue => {
-    console.log(`📄 File: ${fileIssue.file}`);
+function createSummary(filesScanned, codeIssues, dependencyIssues, dependencyMeta) {
+  const summary = {
+    filesScanned,
+    totalVulnerabilities: 0,
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    dependencyAudit: dependencyMeta || {}
+  };
 
-    fileIssue.findings.forEach(f => {
-      console.log(
-        `   [${f.severity}] ${f.rule} -> ${f.message} (line ${f.line})`
-      );
+  codeIssues.forEach(fileIssue => {
+    (fileIssue.findings || []).forEach(issue => {
+      const bucket = normalizeSeverityBucket(issue.severity);
+      summary[bucket] += 1;
+      summary.totalVulnerabilities += 1;
     });
-
-    console.log("");
-  });
-}
-
-/* -----------------------------
-   PRINT DEPENDENCY ISSUES
---------------------------------*/
-if (dependencyReport.issues.length > 0) {
-  console.log("\n📦 Dependency Vulnerabilities:\n");
-
-  dependencyReport.issues.forEach(dep => {
-    console.log(
-      `   ${dep.package} | severity: ${dep.severity} | ${dep.title || "Vulnerability"}`
-    );
   });
 
-  console.log("");
+  dependencyIssues.forEach(issue => {
+    const bucket = normalizeSeverityBucket(issue.severity);
+    summary[bucket] += 1;
+    summary.totalVulnerabilities += 1;
+  });
+
+  return summary;
 }
 
-/* -----------------------------
-   FINAL STATUS
---------------------------------*/
-if (codeFindings.length > 0 || dependencyReport.issues.length > 0) {
-  console.log("❌ Security issues detected");
+async function main() {
+  const cwd = process.cwd();
+  const config = loadConfig(cwd);
+
+  const ruleLoaderOptions = {
+    cwd,
+    rulesDir: path.join(cwd, "rules"),
+    plugins: config.plugins,
+    maxWorkers: config.maxWorkers
+  };
+
+  const rules = loadRules(ruleLoaderOptions);
+
+  const ignorePatterns = (config.ignore || [])
+    .map(toGlobIgnore)
+    .filter(Boolean);
+
+  const files = glob.sync("**/*.js", {
+    ignore: ignorePatterns,
+    nodir: true
+  });
+
+  const absoluteFiles = files.map(file => path.resolve(cwd, file));
+
+  const scannedIssues = await scanFiles(absoluteFiles, rules, {
+    config,
+    useWorkers: true,
+    workerOptions: ruleLoaderOptions
+  });
+
+  const codeIssues = scannedIssues.map(item => ({
+    ...item,
+    file: path.relative(cwd, item.file) || item.file
+  }));
+
+  console.log("🔍 Checking dependencies...");
+  const dependencyReport = scanDependencies();
+
+  const summary = createSummary(
+    files.length,
+    codeIssues,
+    dependencyReport.issues,
+    dependencyReport.vulnerabilities
+  );
+
+  const finalReport = {
+    generatedAt: new Date().toISOString(),
+    codeIssues,
+    dependencyIssues: dependencyReport.issues,
+    summary
+  };
+
+  generateReport(finalReport);
+  printReport(finalReport);
+
+  if (summary.totalVulnerabilities > 0) {
+    process.exit(1);
+  }
+
+  process.exit(0);
+}
+
+main().catch(error => {
+  console.error("Static code analysis failed:", error.message);
   process.exit(1);
-}
-
-console.log("✅ No vulnerabilities detected");
-process.exit(0);
+});
