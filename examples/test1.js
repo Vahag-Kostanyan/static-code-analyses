@@ -1,9 +1,9 @@
-const password = "123456";
+// const password = "123456";
 
-function dangerousEval(input) {
-  eval(input);
-}
+// function dangerousEval(input) {
+//   eval(input);
+// }
 
-dangerousEval("console.log('danger')");
+// dangerousEval("console.log('danger')");
 
-module.exports = { password };
+// module.exports = { password };
