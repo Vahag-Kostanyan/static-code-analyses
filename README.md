@@ -1,147 +1,230 @@
 # Static Code Analyses
 
-A Node.js-based static code analysis tool for detecting security vulnerabilities in JavaScript code. It scans for issues like eval usage, hardcoded secrets, unsafe SQL queries, and dependency vulnerabilities via npm audit.
+A Node.js static security analyzer for JavaScript projects.
+
+It scans JavaScript source files with AST rules, audits dependencies with `npm audit`, writes a JSON report, prints a readable console report, and serves a web dashboard.
 
 ## Features
 
-- **AST-based scanning**: Uses Babel parser to analyze JavaScript code for security issues
-- **Custom rules**: Detects eval, hardcoded secrets, and unsafe queries
-- **Dependency auditing**: Integrates with npm audit for package vulnerabilities
-- **Multiple reporters**: JSON, console, and HTML output
-- **Web UI**: Built-in Express server with a simple web interface to view reports
-- **CLI tool**: Easy to integrate into CI/CD pipelines
+- AST-based rule scanning with Babel parser/traverse
+- Auto rule loading from `rules/`
+- Plugin rule support via config (`plugins`)
+- Config-driven behavior via `.sca.config.js`
+- Optional parallel scanning with `worker_threads`
+- Dependency vulnerability scan via `npm audit --json`
+- JSON report output to `reports/report.json`
+- Console reporter with severity summary
+- Web UI + API endpoints (`/report`, `/summary`, `/issues`)
 
 ## Project Structure
 
-```
+```text
 static-code-analyses/
-├── cli/                     # CLI entry point
+├── cli/
 │   └── index.js
-├── core/                    # Core scanning engine
-│   ├── scanner.js
+├── core/
+│   ├── config-loader.js
 │   ├── dependency-scanner.js
-│   └── rule-runner.js
-├── rules/                   # Security rules (AST visitors)
+│   ├── plugin-loader.js
+│   ├── rule-runner.js
+│   ├── scanner.js
+│   └── worker-scanner.js
+├── rules/
 │   ├── no-eval.js
 │   ├── no-hardcoded-secret.js
 │   └── no-unsafe-query.js
-├── reporters/               # Report generators
-│   ├── json-reporter.js
+├── reporters/
 │   ├── console-reporter.js
-│   └── html-reporter.js
-├── server/                  # Web API server
+│   ├── html-reporter.js
+│   └── json-reporter.js
+├── server/
 │   └── server.js
-├── web/                     # Report viewer UI
+├── web/
+│   ├── app.js
 │   ├── index.html
 │   ├── style.css
-│   ├── app.js
 │   └── README.md
-├── examples/                # Test files with vulnerabilities
-│   ├── test1.js
-│   ├── test2.js
-│   └── example-entry.js
-├── reports/                 # Generated reports
+├── examples/
+│   ├── TESTING.md
+│   ├── configs/
+│   ├── plugins/
+│   ├── vulnerable/
+│   └── ...
+├── reports/
 │   └── report.json
-├── package.json
+├── .sca.config.js
 ├── Dockerfile
+├── package.json
 └── README.md
 ```
 
-## Installation
+## Requirements
 
-1. Clone the repository:
-   ```bash
-   git clone <repo-url>
-   cd static-code-analyses
-   ```
+- Node.js 18+
+- npm
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## Install
 
-## Usage
+```bash
+npm install
+```
 
-### Analyze Code
+## Quick Start
 
-Run the analyzer on the current directory:
+Run analysis:
 
 ```bash
 npm run analyze
 ```
 
-This scans all `.js` files (excluding `node_modules/`, `reports/`, etc.), audits dependencies, and generates `reports/report.json`.
-
-### Start Web Server
-
-Launch the built-in server to view reports in a web UI:
+Start dashboard server:
 
 ```bash
 npm start
 ```
 
-Open `http://localhost:3000/` in your browser to view the latest report.
+Open:
 
-### CLI Tool
-
-Install globally or use npx:
-
-```bash
-npx analyese
-```
-
-Or link locally:
-
-```bash
-npm link
-analyese
-```
-
-## Rules
-
-The tool includes these security rules:
-
-- **no-eval**: Detects `eval()`, `new Function()`, and string-based `setTimeout`/`setInterval`
-- **no-hardcoded-secret**: Finds hardcoded secrets in variables/properties (password, token, etc.)
-- **no-unsafe-query**: Flags SQL injection via string concatenation in `.query()` calls
-
-## Reporters
-
-- **JSON**: Default output to `reports/report.json`
-- **Console**: Print summary to terminal
-- **HTML**: Generate `reports/report.html` for standalone viewing
-
-## Docker
-
-Build and run with Docker:
-
-```bash
-docker build -t static-analyses .
-docker run -p 3000:3000 static-analyses
-```
+- `http://localhost:3000/`
 
 ## Configuration
 
-- Modify `cli/index.js` to add custom rules or reporters
-- Update ignore patterns in the glob config
-- Customize server port with `PORT` environment variable
+The analyzer loads `.sca.config.js` from project root.
 
-## Examples
+Example:
 
-Test files in `examples/` demonstrate detected vulnerabilities:
+```js
+module.exports = {
+  ignore: [
+    "node_modules",
+    "dist",
+    "build"
+  ],
+  rules: {
+    "no-eval": "error",
+    "no-hardcoded-secret": "warn",
+    "no-open-redirect": "off"
+  },
+  severityThreshold: "low", // low | medium | high | critical
+  plugins: ["./examples/plugins/no-console-log.js"],
+  parallelThreshold: 20,
+  maxWorkers: 4
+};
+```
 
-- `examples/test1.js`: Hardcoded password and eval
-- `examples/test2.js`: Multiple evals, unsafe query, and secret
-- `examples/example-entry.js`: Clean file
+## Rule System
 
-Run analysis to see them in the report.
+Rules are auto-loaded from `rules/*.js`.
 
-## Contributing
+Each rule must export:
 
-1. Add new rules in `rules/`
-2. Implement reporters in `reporters/`
-3. Update tests in `examples/`
-4. Submit a PR
+- `meta.name`
+- `meta.description`
+- `meta.severity` (`low` | `medium` | `high` | `critical`)
+- `create(context)` visitor map
+
+Minimal rule shape:
+
+```js
+module.exports = {
+  meta: {
+    name: "no-eval",
+    description: "Detect usage of eval()",
+    severity: "high"
+  },
+  create(context) {
+    return {
+      CallExpression(path) {
+        if (path.node.callee?.name === "eval") {
+          context.report(path, "Avoid using eval()");
+        }
+      }
+    };
+  }
+};
+```
+
+## Plugins
+
+External rules can be loaded with `.sca.config.js`:
+
+```js
+plugins: ["./path/to/plugin-rule.js", "my-security-plugin"]
+```
+
+Supported plugin exports:
+
+- single rule object
+- array of rules
+- object with `rules` field (array or map)
+
+## Parallel Scanning
+
+When the number of scanned files is greater than or equal to `parallelThreshold`, scanning is distributed using `worker_threads` (`core/worker-scanner.js`).
+
+## Report Output
+
+`npm run analyze` writes `reports/report.json` with shape:
+
+```json
+{
+  "generatedAt": "2026-03-16T00:00:00.000Z",
+  "codeIssues": [],
+  "dependencyIssues": [],
+  "summary": {
+    "filesScanned": 0,
+    "totalVulnerabilities": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "dependencyAudit": {}
+  }
+}
+```
+
+## Console Output
+
+Console reporter prints issues in readable format:
+
+```text
+[HIGH] no-eval
+File: src/auth/login.js
+Line: 45
+Message: Avoid using eval()
+```
+
+It also prints dependency issues and a summary block.
+
+## Web API
+
+Server endpoints:
+
+- `GET /report` -> full report JSON
+- `GET /summary` -> summary object
+- `GET /issues` -> flattened issues list
+- `GET /api/report` -> backward-compatible full report endpoint
+
+## Test Examples
+
+Use ready-to-run examples in `examples/`.
+
+- Test guide: `examples/TESTING.md`
+- Vulnerable fixtures: `examples/vulnerable/`
+- Plugin sample rule: `examples/plugins/no-console-log.js`
+- Config samples: `examples/configs/`
+
+## Docker
+
+```bash
+docker build -t static-code-analyses .
+docker run -p 3000:3000 static-code-analyses
+```
+
+## Exit Codes
+
+- `0` => no vulnerabilities found
+- `1` => vulnerabilities found or scan failure
 
 ## License
 

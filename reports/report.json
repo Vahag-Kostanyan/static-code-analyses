@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-16T12:58:26.578Z",
+  "generatedAt": "2026-03-16T13:04:11.054Z",
   "codeIssues": [],
   "dependencyIssues": [],
   "summary": {
@@ -9,13 +9,6 @@
     "high": 0,
     "medium": 0,
     "low": 0,
-    "dependencyAudit": {
-      "info": 0,
-      "low": 0,
-      "moderate": 0,
-      "high": 0,
-      "critical": 0,
-      "total": 0
-    }
+    "dependencyAudit": {}
   }
 }
