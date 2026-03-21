@@ -4,7 +4,7 @@
   "description": "",
   "main": "cli/index.js",
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "lodash@4.17.15 install",
     "analyze": "node ./cli/index.js",
     "start": "node ./server/server.js"
   },

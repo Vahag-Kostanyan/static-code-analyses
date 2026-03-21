@@ -53,6 +53,15 @@ function printCodeIssues(codeIssues) {
 
 function printDependencyIssues(dependencyIssues) {
   dependencyIssues.forEach(dep => {
+    if (dep.kind === "scan-error") {
+      console.log("Dependency Scan Error");
+      console.log(`Tool: ${dep.package || "npm-audit"}`);
+      console.log(`Severity: ${String(dep.severity || "high").toUpperCase()}`);
+      console.log(`Message: ${dep.advisory || dep.title || "Dependency scan failed."}`);
+      console.log("");
+      return;
+    }
+
     console.log("Dependency Vulnerability Detected");
     console.log(`Package: ${dep.package || "unknown"}`);
     console.log(`Version: ${dep.version || "unknown"}`);

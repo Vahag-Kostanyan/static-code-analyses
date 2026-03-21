@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3456;
 const reportPath = path.join(__dirname, "..", "reports", "report.json");
 
 function loadReport() {

@@ -1,14 +1,21 @@
 {
-  "generatedAt": "2026-03-16T13:04:11.054Z",
+  "generatedAt": "2026-03-21T19:25:35.714Z",
   "codeIssues": [],
   "dependencyIssues": [],
   "summary": {
-    "filesScanned": 42,
+    "filesScanned": 50,
     "totalVulnerabilities": 0,
     "critical": 0,
     "high": 0,
     "medium": 0,
     "low": 0,
-    "dependencyAudit": {}
+    "dependencyAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
   }
 }
