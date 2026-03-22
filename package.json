@@ -4,9 +4,10 @@
   "description": "",
   "main": "cli/index.js",
   "scripts": {
-    "prepare": "lodash@4.17.15 install",
+    "prepare": "husky install",
     "analyze": "node ./cli/index.js",
-    "start": "node ./server/server.js"
+    "start": "node ./server/server.js",
+    "install:vuln-deps": "npm install --save-exact lodash@4.17.15 minimist@1.2.5 protobufjs@7.2.4"
   },
   "bin": {
     "static-code-analyses": "./cli/index.js"
@@ -21,7 +22,10 @@
     "chalk": "^5.6.2",
     "express": "^4.22.1",
     "fs-extra": "^11.3.3",
-    "glob": "^13.0.6"
+    "glob": "^13.0.6",
+    "lodash": "4.17.15",
+    "minimist": "1.2.5",
+    "protobufjs": "7.2.4"
   },
   "devDependencies": {
     "husky": "^8.0.0",

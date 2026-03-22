@@ -2,19 +2,36 @@
 
 A Node.js static security analyzer for JavaScript projects.
 
-It scans JavaScript source files with AST rules, audits dependencies with `npm audit`, writes a JSON report, prints a readable console report, and serves a web dashboard.
+It scans JavaScript source code with AST rules, audits dependencies with `npm audit --json`, writes `reports/report.json`, prints a console report, and serves a web dashboard.
 
-## Features
+![Figure 12: Final End-to-End Lifecycle](docs/assets/figure-12-lifecycle.png)
 
-- AST-based rule scanning with Babel parser/traverse
-- Auto rule loading from `rules/`
-- Plugin rule support via config (`plugins`)
-- Config-driven behavior via `.sca.config.js`
-- Optional parallel scanning with `worker_threads`
-- Dependency vulnerability scan via `npm audit --json`
-- JSON report output to `reports/report.json`
-- Console reporter with severity summary
-- Web UI + API endpoints (`/report`, `/summary`, `/issues`)
+## What This Project Detects
+
+Built-in code rules:
+
+- `no-unsafe-query` (SQL injection patterns)
+- `no-command-exec` (command injection patterns)
+- `no-hardcoded-secret`
+- `no-eval` (including `new Function` and string `setTimeout/setInterval`)
+- `no-path-traversal`
+- `no-weak-crypto`
+- `no-prototype-pollution`
+- `no-open-redirect`
+- `no-secret-leak`
+
+Dependency/security supply-chain detection:
+
+- vulnerable packages from `npm audit` output
+
+## Key Features
+
+- AST-based scanning with `@babel/parser` + `@babel/traverse`
+- Plugin-capable rule system (`core/plugin-loader.js`)
+- Safe config loading from `.sca.config.js` (`core/config-loader.js`)
+- Parallel scanning with `worker_threads` (`core/worker-scanner.js`)
+- Severity threshold filtering (`low|medium|high|critical`)
+- Multiple outputs: JSON report + console report + web dashboard APIs
 
 ## Project Structure
 
@@ -30,9 +47,15 @@ static-code-analyses/
 │   ├── scanner.js
 │   └── worker-scanner.js
 ├── rules/
+│   ├── no-command-exec.js
 │   ├── no-eval.js
 │   ├── no-hardcoded-secret.js
-│   └── no-unsafe-query.js
+│   ├── no-open-redirect.js
+│   ├── no-path-traversal.js
+│   ├── no-prototype-pollution.js
+│   ├── no-secret-leak.js
+│   ├── no-unsafe-query.js
+│   └── no-weak-crypto.js
 ├── reporters/
 │   ├── console-reporter.js
 │   ├── html-reporter.js
@@ -47,11 +70,14 @@ static-code-analyses/
 ├── examples/
 │   ├── TESTING.md
 │   ├── configs/
+│   ├── parallel/
 │   ├── plugins/
-│   ├── vulnerable/
-│   └── ...
+│   └── vulnerable/
 ├── reports/
 │   └── report.json
+├── docs/
+│   └── assets/
+│       └── figure-12-lifecycle.png
 ├── .sca.config.js
 ├── Dockerfile
 ├── package.json
@@ -63,33 +89,45 @@ static-code-analyses/
 - Node.js 18+
 - npm
 
-## Install
+## Installation
 
 ```bash
 npm install
 ```
 
+## NPM Scripts
+
+- `npm run analyze` -> runs static analysis and dependency audit
+- `npm start` -> starts web server and API
+- `npm run install:vuln-deps` -> installs known vulnerable dependencies for testing
+
 ## Quick Start
 
-Run analysis:
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Run scan:
 
 ```bash
 npm run analyze
 ```
 
-Start dashboard server:
+3. Start dashboard/API server:
 
 ```bash
 npm start
 ```
 
-Open:
+4. Open dashboard:
 
-- `http://localhost:3000/`
+- `http://localhost:3456/`
 
-## Configuration
+## Configuration (`.sca.config.js`)
 
-The analyzer loads `.sca.config.js` from project root.
+Config is loaded from project root. If missing/invalid, defaults from `core/config-loader.js` are used.
 
 Example:
 
@@ -112,18 +150,25 @@ module.exports = {
 };
 ```
 
-## Rule System
+### Config Options
 
-Rules are auto-loaded from `rules/*.js`.
+- `ignore`: directories/globs excluded from `**/*.js` scan
+- `rules`: per-rule level (`off|warn|error`)
+- `severityThreshold`: minimum severity included in findings
+- `plugins`: external rule files/modules
+- `parallelThreshold`: min file count before worker-thread mode starts
+- `maxWorkers`: optional worker limit
 
-Each rule must export:
+## Plugin Rule Contract
+
+Each rule should export:
 
 - `meta.name`
 - `meta.description`
-- `meta.severity` (`low` | `medium` | `high` | `critical`)
-- `create(context)` visitor map
+- `meta.severity` (`low|medium|high|critical`)
+- `create(context)` that returns AST visitors
 
-Minimal rule shape:
+Example rule:
 
 ```js
 module.exports = {
@@ -135,7 +180,7 @@ module.exports = {
   create(context) {
     return {
       CallExpression(path) {
-        if (path.node.callee?.name === "eval") {
+        if (path.node.callee?.type === "Identifier" && path.node.callee.name === "eval") {
           context.report(path, "Avoid using eval()");
         }
       }
@@ -144,32 +189,38 @@ module.exports = {
 };
 ```
 
-## Plugins
+## Core Engine Flow
 
-External rules can be loaded with `.sca.config.js`:
+1. `cli/index.js` loads config and rules.
+2. Files are discovered with `glob` and ignore patterns.
+3. `core/scanner.js` parses files to AST and executes rules.
+4. `core/worker-scanner.js` parallelizes large scans.
+5. `core/dependency-scanner.js` runs `npm audit --json`.
+6. Findings are merged into one report object.
+7. `reporters/json-reporter.js` writes `reports/report.json`.
+8. `reporters/console-reporter.js` prints detailed findings + summary.
 
-```js
-plugins: ["./path/to/plugin-rule.js", "my-security-plugin"]
-```
+## Report Output Format
 
-Supported plugin exports:
-
-- single rule object
-- array of rules
-- object with `rules` field (array or map)
-
-## Parallel Scanning
-
-When the number of scanned files is greater than or equal to `parallelThreshold`, scanning is distributed using `worker_threads` (`core/worker-scanner.js`).
-
-## Report Output
-
-`npm run analyze` writes `reports/report.json` with shape:
+`reports/report.json`:
 
 ```json
 {
-  "generatedAt": "2026-03-16T00:00:00.000Z",
-  "codeIssues": [],
+  "generatedAt": "2026-03-22T00:00:00.000Z",
+  "codeIssues": [
+    {
+      "file": "examples/vulnerable/no-eval.js",
+      "findings": [
+        {
+          "rule": "no-eval",
+          "severity": "HIGH",
+          "message": "Avoid using eval() — it can lead to code injection.",
+          "line": 6,
+          "column": 2
+        }
+      ]
+    }
+  ],
   "dependencyIssues": [],
   "summary": {
     "filesScanned": 0,
@@ -185,46 +236,75 @@ When the number of scanned files is greater than or equal to `parallelThreshold`
 
 ## Console Output
 
-Console reporter prints issues in readable format:
+Code issue format:
 
 ```text
 [HIGH] no-eval
-File: src/auth/login.js
-Line: 45
-Message: Avoid using eval()
+File: examples/vulnerable/no-eval.js
+Line: 6
+Message: Avoid using eval() — it can lead to code injection.
 ```
 
-It also prints dependency issues and a summary block.
+Dependency issue format:
 
-## Web API
+```text
+Dependency Vulnerability Detected
+Package: lodash
+Version: <range>
+Severity: HIGH
+Advisory: <title>
+```
 
-Server endpoints:
+Summary format:
 
-- `GET /report` -> full report JSON
+```text
+## Scan Summary
+
+Files scanned: 120
+Total vulnerabilities: 8
+
+Critical: 1
+High: 3
+Medium: 2
+Low: 2
+```
+
+## API Endpoints
+
+Server: `server/server.js` (default port `3456`)
+
+- `GET /report` -> full `report.json`
 - `GET /summary` -> summary object
-- `GET /issues` -> flattened issues list
-- `GET /api/report` -> backward-compatible full report endpoint
+- `GET /issues` -> flattened issue list
+- `GET /api/report` -> backward-compatible full report
 
-## Test Examples
-
-Use ready-to-run examples in `examples/`.
+## Examples and Validation
 
 - Test guide: `examples/TESTING.md`
 - Vulnerable fixtures: `examples/vulnerable/`
-- Plugin sample rule: `examples/plugins/no-console-log.js`
+- Plugin sample: `examples/plugins/no-console-log.js`
 - Config samples: `examples/configs/`
+
+Fast validation flow:
+
+1. `npm run install:vuln-deps`
+2. `npm run analyze`
+3. Verify terminal output includes code + dependency findings
+4. Open `reports/report.json`
+5. `npm start` and open `http://localhost:3456/`
+6. Check `/report`, `/summary`, and `/issues`
+
+## Exit Codes
+
+- `0`: no vulnerabilities detected
+- `1`: vulnerabilities found or scan failed
 
 ## Docker
 
 ```bash
 docker build -t static-code-analyses .
-docker run -p 3000:3000 static-code-analyses
+docker run -p 3456:3456 static-code-analyses
 ```
-
-## Exit Codes
-
-- `0` => no vulnerabilities found
-- `1` => vulnerabilities found or scan failure
 
 ## License
 
