@@ -1,106 +1,21 @@
 {
-  "generatedAt": "2026-03-21T19:33:25.987Z",
+  "generatedAt": "2026-03-22T17:30:48.198Z",
   "codeIssues": [],
-  "dependencyIssues": [
-    {
-      "package": "lodash",
-      "version": "<=4.17.21",
-      "severity": "high",
-      "advisory": "Command Injection in lodash",
-      "title": "Command Injection in lodash",
-      "via": [
-        {
-          "source": 1106913,
-          "name": "lodash",
-          "dependency": "lodash",
-          "title": "Command Injection in lodash",
-          "url": "https://github.com/advisories/GHSA-35jh-r3h4-6jhm",
-          "severity": "high",
-          "cwe": [
-            "CWE-77",
-            "CWE-94"
-          ],
-          "cvss": {
-            "score": 7.2,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H"
-          },
-          "range": "<4.17.21"
-        },
-        {
-          "source": 1108258,
-          "name": "lodash",
-          "dependency": "lodash",
-          "title": "Regular Expression Denial of Service (ReDoS) in lodash",
-          "url": "https://github.com/advisories/GHSA-29mw-wpgm-hmr9",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-400",
-            "CWE-1333"
-          ],
-          "cvss": {
-            "score": 5.3,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
-          },
-          "range": ">=4.0.0 <4.17.21"
-        },
-        {
-          "source": 1112455,
-          "name": "lodash",
-          "dependency": "lodash",
-          "title": "Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions",
-          "url": "https://github.com/advisories/GHSA-xxjr-mmjv-4gpg",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-1321"
-          ],
-          "cvss": {
-            "score": 6.5,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L"
-          },
-          "range": ">=4.0.0 <=4.17.22"
-        }
-      ]
-    },
-    {
-      "package": "minimist",
-      "version": "1.0.0 - 1.2.5",
-      "severity": "critical",
-      "advisory": "Prototype Pollution in minimist",
-      "title": "Prototype Pollution in minimist",
-      "via": [
-        {
-          "source": 1097678,
-          "name": "minimist",
-          "dependency": "minimist",
-          "title": "Prototype Pollution in minimist",
-          "url": "https://github.com/advisories/GHSA-xvch-5gv4-984h",
-          "severity": "critical",
-          "cwe": [
-            "CWE-1321"
-          ],
-          "cvss": {
-            "score": 9.8,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
-          },
-          "range": ">=1.0.0 <1.2.6"
-        }
-      ]
-    }
-  ],
+  "dependencyIssues": [],
   "summary": {
     "filesScanned": 50,
-    "totalVulnerabilities": 2,
-    "critical": 1,
-    "high": 1,
+    "totalVulnerabilities": 0,
+    "critical": 0,
+    "high": 0,
     "medium": 0,
     "low": 0,
     "dependencyAudit": {
       "info": 0,
       "low": 0,
       "moderate": 0,
-      "high": 1,
-      "critical": 1,
-      "total": 2
+      "high": 0,
+      "critical": 0,
+      "total": 0
     }
   }
 }
